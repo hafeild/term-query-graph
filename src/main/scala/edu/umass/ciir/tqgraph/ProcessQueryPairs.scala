@@ -12,6 +12,7 @@ package edu.umass.ciir.tqgraph
 import edu.umass.ciir.tqgraph.util.{ScalaFileIO,FileParser,FileIO,CommandLineIO}
 import scala.collection.mutable.ArrayBuffer
 import scala.collection.mutable.HashMap
+import java.io.File
 
 /**
  * Takes a set of query reformulation counts and produces three things:
@@ -254,12 +255,15 @@ object ProcessQueryPairs {
      *              file and an output directory at a minimum.
      */
     def main(args:Array[String]){
-        if( args.size < 2 || !ScalaFileIO.filesExist(Array(args(0), args(1)))) 
+        if( args.size < 2 || !ScalaFileIO.fileExists(args(0)))
             CommandLineIO.exitNice(Usage)
 
         val queryPairFile = args(0)
         val outDir = args(1)
         val queryCountEst = if( args.size > 2 ) args(2).toInt else 0
+
+        if( !ScalaFileIO.fileExists(outDir) )
+            new File(outDir).mkdirs()
 
         val pqp = new ProcessQueryPairs(queryPairFile, queryCountEst)
         pqp.generateSparseRewriteMatrix()
