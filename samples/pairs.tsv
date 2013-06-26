@@ -1,0 +1,15 @@
+query1	query2	count
+google	google	13018
+yahoo	yahoo	4034
+ebay	ebay	3416
+google.com	google.com	2735
+yahoo.com	yahoo.com	3251
+google	google.com	2008
+mapquest	mapquest	2269
+goggle	google	1939
+tattoos	tattoo	1361
+google	yahoo	1817
+www.google	www.google.com	1361
+yahoo	google	1848
+home depot	lowes	1237
+www.google.com	www.google.com	1593
