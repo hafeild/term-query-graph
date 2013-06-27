@@ -108,7 +108,7 @@ class QFGOps(val termPostingsFilename:String,
     def parseTermPostingAndApply(line:String, info:TermPostingInfo):
             TermPostingInfo = {
 
-        var cols = line.split(",")
+        var cols = line.split("\t")
 
         // Check that this entry is one that is wanted.
         if( info.terms.contains(cols(0)) ){
@@ -165,6 +165,7 @@ class QFGOps(val termPostingsFilename:String,
         // Called once the RWR object has been updated for the given term.
         def randomWalkAndSave(term:String) {
             results.clear
+            Console.err.print("\t["+ term +"]:")
             val runInfo = rwr.run()
 
             val cacheFilename = genCacheFilename(term)
@@ -231,6 +232,7 @@ class QFGOps(val termPostingsFilename:String,
 
         // Called once the RWR object has been updated for the given term.
         def randomWalkAndSave(term:String) {
+            Console.err.print("\tRandom walk for ["+ term +"], ")
             rwr.run()
             rwr.p.foreach{case(qid,value) =>
                 if( value.value > 0 ){
@@ -273,7 +275,7 @@ object QFGOps {
     val ConvergenceDistance = 0.005
     val SplitCount = 4
     val MinCommandLineArgs = 3
-    val K = -1
+    val K = -1L
 
     val Usage = """
     |Usage: QFGOps  <query file> <rewrite matrix dir> <term cache dir> [options]
@@ -346,7 +348,7 @@ object QFGOps {
 
         // Parses a single line of the rewrite matrix file.
         def parseLine(line:String, x:Boolean):Boolean = {
-            val cols = line.split(",")
+            val cols = line.split("\t")
             val q1id = cols(0).toInt
             val addTransition = rwr.addNodeTransitionsFnc(q1id)
             var i = 1
@@ -373,8 +375,8 @@ object QFGOps {
     def parseQueryIDMapping(filename:String):HashMap[Int,String] = {
         def parseQueryIDMappingEntry(line:String, map:HashMap[Int,String]):
                 HashMap[Int,String] = {
-            val query = line.substring(0,line.lastIndexOf(","))
-            val qid = line.substring(line.lastIndexOf(",")+1).toInt
+            val query = line.substring(0,line.lastIndexOf("\t"))
+            val qid = line.substring(line.lastIndexOf("\t")+1).toInt
 
             map(qid) = query
             map
@@ -391,7 +393,7 @@ object QFGOps {
      * @return A vector.
      */
     def parseRandomWalkVectorEntry(line:String):Vector = {
-        val cols = line.split(",")
+        val cols = line.split("\t")
         val vector = new Vector(cols(0))
         var i = 1
         while( i < cols.size) {
@@ -438,7 +440,7 @@ object QFGOps {
         var alpha = Alpha
         var splitCount = SplitCount
         var convergenceDistance = ConvergenceDistance
-        var k = Long.MaxValue
+        var k = K
 
         for( i <- MinCommandLineArgs until args.length){
             if( args(i).startsWith("--alpha=") )
@@ -477,13 +479,16 @@ object QFGOps {
         def parseQueryList(line:String, foo:Boolean):Boolean = {
             val query = line.trim
             val recVector = recommender.getRecommendationVector(query)
+            Console.err.println("Processing ["+ query +"]:")
             print(query)
             recVector.pairs.map{case(qid,score) =>
-                new Pair(qid, score)}.toList.sorted.take(k.toInt).foreach( 
+                new Pair(qid, score)}.toList.sorted.take(
+                    math.min(k, recVector.pairs.size.toLong).toInt).foreach( 
                     qfgOps.decodePairAndApply( _, (rec:String,score:Double)=>
                         print("\t"+ rec +"\t"+ score)
                     )
                 )
+            println()
             foo
         }
 
@@ -523,7 +528,7 @@ object QFGOps {
          * Returns the query id, score pair as a comma separated string.
          * @return The query id, score pair as a comma separated string.
          */
-        override def toString():String = queryID +","+ score
+        override def toString():String = queryID +"\t"+ score
     }
 
     /**
@@ -656,9 +661,9 @@ object QFGOps {
 
         /**
          * Prints this vector.
-         * @param delim     The delimiter to use. Default: ","
+         * @param delim     The delimiter to use. Default: "\t"
          */
-        def print(delim:String=",") = {
+        def print(delim:String="\t") = {
             Console.print( clean(query) )
             pairs.foreach{case(qid,score) => 
                 Console.print(delim+qid+delim+score)} 
