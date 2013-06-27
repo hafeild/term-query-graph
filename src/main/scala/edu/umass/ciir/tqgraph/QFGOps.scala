@@ -266,7 +266,7 @@ class QFGOps(val termPostingsFilename:String,
         new File(genCacheFilename(term)).exists()
 
     def genCacheFilename(term:String):String = 
-        termRandomWalkCache + File.separator + term
+        termRandomWalkCache + File.separator + term +".gz"
 }
 
 
