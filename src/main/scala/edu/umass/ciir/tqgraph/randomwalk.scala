@@ -65,7 +65,7 @@ abstract class RandomWalker(val c:Double,
         var keepGoing = true
         var iterations = 0
         var distance = 0.0
-        Console.err.print( "Iterating: " )
+        Console.err.print( "iterating: " )
 
         normalizeE()
 
@@ -86,6 +86,8 @@ abstract class RandomWalker(val c:Double,
                 distance > convergenceDistance
         }
         val end = System.currentTimeMillis
+
+        Console.err.println()
 
         new RunInfo(iterations, end-start)
     }
