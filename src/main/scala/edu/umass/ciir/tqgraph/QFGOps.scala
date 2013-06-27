@@ -47,6 +47,10 @@ class QFGOps(val termPostingsFilename:String,
 
     if( k < 0 ) k = Long.MaxValue
 
+    // Create the term cache directory if it doesn't exist.
+    if( !new File(termRandomWalkCache).exists() )
+        new File(termRandomWalkCache).mkdirs()
+
     /**
      * Reads in the sparse re-write matrix.
      */
