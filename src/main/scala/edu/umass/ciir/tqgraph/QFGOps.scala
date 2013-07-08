@@ -259,7 +259,9 @@ class QFGOps(val termPostingsFilename:String,
         })
         out.close
 
-        new Vector(term, results)
+        val vec = new Vector(term, results)
+        vec.isFirst = false
+        vec
     }
 
     def existsInCache(term:String):Boolean = 
