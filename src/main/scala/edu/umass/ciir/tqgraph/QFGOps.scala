@@ -444,7 +444,7 @@ object QFGOps {
 
         for( i <- MinCommandLineArgs until args.length){
             if( args(i).startsWith("--alpha=") )
-                alpha = args(i).replaceAll("--split-count=", "").toDouble
+                alpha = args(i).replaceAll("--alpha=", "").toDouble
             else if( args(i) == "--parallel" )
                 parallel = true
             else if( args(i).startsWith("--split-count=") )
