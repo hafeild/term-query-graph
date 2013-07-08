@@ -80,7 +80,7 @@ abstract class RandomWalker(val c:Double,
             }
             step()
             iterations += 1
-            distance = updateP().abs
+            distance = updateP()
 
             keepGoing = iterations < maxIterations && 
                 distance > convergenceDistance
@@ -125,7 +125,7 @@ abstract class RandomWalker(val c:Double,
     def updateP():Double = {
         var sum = 0.0
         p.values.foreach{entry => 
-            sum += entry.runningSum - entry.value
+            sum += (entry.runningSum - entry.value).abs
             entry.value = entry.runningSum
             entry.runningSum = 0.0
         }
@@ -399,7 +399,7 @@ class RandomWalkParallelized(
     def updatePSplit(split:ListBuffer[PEntry]):Double = {
         var sum = 0.0
         split.foreach{entry =>
-            sum += entry.runningSum - entry.value
+            sum += (entry.runningSum - entry.value).abs
             entry.value = entry.runningSum
             entry.runningSum = 0.0
         }
