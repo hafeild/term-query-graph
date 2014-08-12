@@ -16,6 +16,6 @@ object CommandLineIO
     def exitNice( usage:String )
     {
         Console.err.println( usage )
-        exit
+        System.exit(1)
     }
 }

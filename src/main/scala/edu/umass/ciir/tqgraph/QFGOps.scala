@@ -13,29 +13,35 @@ import java.io.File
 
 /**
  * Provides functionality involving Query Flow Graphs (QFGs) and Term-Query
- * Graphs (TQGraphs).
+ * Graphs (TQGraphs). These are all optional. Don't forget to use either the
+ * setInputFiles() or setInputDir() methods. You can also use the apply methods.
+ * For example, to use all the defaults and then supply a directory for the
+ * input files, do:
  *
- * @param termPostingsFilename     The term postings file. Each line should be
- *                                 in the format: <term>,<qid1>,<qid2>...
- * @param queryIDMappingFilename   A file containing a mapping from query text
- *                                 the query ids. Should be in the format:
- *                                 <query-text>,<id>
- * @param queryReformulationMatrixFilename  
- *                                 A file containing the sparse matrix of query
- *                                 rewrites; rows should correspond to source
- *                                 queries. Each row should be in the form:
- *                 <src-qid>,<target-qid1>,<prob1>,<target-qid2>,<prob2>,...
+ * val qfgOps = new QFGOps()(qfgDir)
  *
+ * Or to specify your own value for each of the constructor parameters:
+ *
+ * val qfgOps = new QFGOps(termCache, parallel, splitCount, alpha, 
+ *           convergenceDistance, k)(qfgDir)
+ *
+ * @param termCache            The directory of the term cache files.
+ * @param parallel             Whether to parallelize the random walks 
+ *                             (default: false).
+ * @param splitCount           If <code>parallel==true</code>, the random  
+ *                             walk processing will be split into this many
+ *                             chunks.
+ * @param convergenceDistance  The maximum distance between two iterations
+ *                             of a random walk that count as convergence.
+ * @param k                    The number of top nodes from a term's random
+ *                             walk to emit.
  * @author hfeild
  */
-class QFGOps(val termPostingsFilename:String, 
-             val queryIDMappingFilename:String, 
-             val queryReformulationMatrixFilename:String,
-             val termRandomWalkCache:String,
-             val parallel:Boolean = false,
-             val splitCount:Int = QFGOps.SplitCount,
-             var alpha:Double = QFGOps.Alpha,
-             val convergenceDistance:Double = QFGOps.ConvergenceDistance,
+class QFGOps(val termRandomWalkCache:String="",
+             var parallel:Boolean=false,
+             var splitCount:Int=QFGOps.SplitCount,
+             var alpha:Double=QFGOps.Alpha,
+             var convergenceDistance:Double=QFGOps.ConvergenceDistance,
              var k:Long=QFGOps.K) {
     import QFGOps._
     type SparseFunction = (String, HashMap[Int,Double])=>Unit
@@ -43,6 +49,83 @@ class QFGOps(val termPostingsFilename:String,
     var rwr:RandomWalker = null
     var qidMap:HashMap[Int,String] = null
     var qfgRead = false
+
+    var termPostingsFilename=""
+    var queryIDMappingFilename=""
+    var queryReformulationMatrixFilename=""
+
+    /**
+     * An alias for setInputFiles that also returns this instance.
+     *
+     * @param termPostingsFilename   The term postings file. Each line should be
+     *                               in the format: <term>,<qid1>,<qid2>...
+     * @param queryIDMappingFilename A file containing a mapping from query text
+     *                               the query ids. Should be in the format:
+     *                               <query-text>,<id>
+     * @param queryReformulationMatrixFilename  
+     *                               A file containing the sparse matrix of 
+     *                               query rewrites; rows should correspond to 
+     *                               source queries. Each row should be in the 
+     *                               form:
+     *       <src-qid>,<target-qid1>,<prob1>,<target-qid2>,<prob2>,...
+     * @return This instance.
+     */
+    def apply(termPostingsFilename:String,queryIDMappingFilename:String,
+        queryReformulationMatrixFilename:String):QFGOps = {
+        setInputFiles(termPostingsFilename, queryIDMappingFilename, 
+            queryReformulationMatrixFilename)
+        this
+    }
+
+    /**
+     * Sets the term files.
+     *
+     * @param termPostingsFilename   The term postings file. Each line should be
+     *                               in the format: <term>,<qid1>,<qid2>...
+     * @param queryIDMappingFilename A file containing a mapping from query text
+     *                               the query ids. Should be in the format:
+     *                               <query-text>,<id>
+     * @param queryReformulationMatrixFilename  
+     *                               A file containing the sparse matrix of 
+     *                               query rewrites; rows should correspond to 
+     *                               source queries. Each row should be in the 
+     *                               form:
+     *       <src-qid>,<target-qid1>,<prob1>,<target-qid2>,<prob2>,...
+     */
+    def setInputFiles(termPostingsFilename:String,queryIDMappingFilename:String,
+        queryReformulationMatrixFilename:String) {
+        this.termPostingsFilename = termPostingsFilename
+        this.queryIDMappingFilename = queryIDMappingFilename
+        this.queryReformulationMatrixFilename = queryReformulationMatrixFilename
+    }
+
+    /**
+     * An alias for setInputDir that also returns the current instance.
+     *
+     * @param dir      The directory containing the term postings, rewrite
+     *                 matrix, and query id mapping file.
+     * @return This instance.
+     */
+    def apply(dir:String):QFGOps = {
+        setInputDir(dir)
+        this
+    }
+
+    /**
+     * Given a directory, assumes the three input files are named as in 
+     * ProcessQueryPairs and class setInputFiles().
+     * 
+     * @param dir      The directory containing the term postings, rewrite
+     *                 matrix, and query id mapping file.
+     */
+    def setInputDir(dir:String) {
+        setInputFiles( 
+            dir + File.separator + ProcessQueryPairs.TermPostingsFilename,
+            dir + File.separator + ProcessQueryPairs.QueryIDMappingFilename ,
+            dir + File.separator + ProcessQueryPairs.
+                QueryReformulationMatrixFilename )
+    }
+
 
 
     if( k < 0 ) k = Long.MaxValue
@@ -68,30 +151,6 @@ class QFGOps(val termPostingsFilename:String,
         qidMap = parseQueryIDMapping(queryIDMappingFilename)
     }
 
-    /**
-     * Alternative constructor. Given a directory, assumes the three input files
-     * are named as in ProcessQueryPairs.
-     * 
-     * @param dir      The directory containing the term postings, rewrite
-     *                 matrix, and query id mapping file.
-     * @param termCache The directory of the term cache files.
-     * @param parallel Whether to parallelize the random walks (default: false).
-     * @param splitCount  If <code>parallel==true</code>, the random walk 
-     *                 processing will be split into this many chunks.
-     * @param convergenceDistance  The maximum distance between two iterations
-     *                 of a random walk that count as convergence.
-     * @param k        The number of top nodes from a term's random walk to
-     *                 emit.
-     */
-    def this(dir:String, termCache:String, parallel:Boolean = false, 
-            splitCount:Int = QFGOps.SplitCount, alpha:Double = QFGOps.Alpha,
-            convergenceDistance:Double=QFGOps.ConvergenceDistance, 
-            k:Long=QFGOps.K) {
-        this( dir +"/"+ ProcessQueryPairs.TermPostingsFilename,
-              dir +"/"+ ProcessQueryPairs.QueryIDMappingFilename ,
-              dir +"/"+ ProcessQueryPairs.QueryReformulationMatrixFilename,
-              termCache, parallel, splitCount, alpha, convergenceDistance, k )
-    }
 
     /**
      * Parses the given line from the term postings file and applies the given
@@ -471,9 +530,8 @@ object QFGOps {
         if( k < 0 )
             k = Long.MaxValue
 
-        val qfgOps = new QFGOps(
-            qfgDir, termCache, parallel, splitCount, alpha, 
-            convergenceDistance, k)
+        val qfgOps = new QFGOps(termCache, parallel, splitCount, alpha, 
+            convergenceDistance, k)(qfgDir)
         qfgOps.readQueryIDMap()
         val recommender = new QueryRecommender(termCache, qfgOps, k)
 

@@ -103,7 +103,8 @@ abstract class RandomWalker(val c:Double,
         if( !p.contains(id) )
             p(id) = new PEntry(value)
         p(id).value = value
-        e += new EEntry(value*c, p(id))
+        // e += new EEntry(value*c, p(id))
+        e += new EEntry(value, p(id))
         eSum += value
     }
 
@@ -113,8 +114,8 @@ abstract class RandomWalker(val c:Double,
      */
     def normalizeE() {
         e.foreach{ entry =>
-            entry.value /= eSum
-            entry.pEntry.value /= eSum
+            entry.pEntry.value = entry.value / eSum
+            entry.value = entry.value / eSum * c
         }
     }
 
@@ -226,7 +227,7 @@ class RandomWalk(
             if( !p.contains(destNode) )
                 p(destNode) = new PEntry()
             val destNodeEntry = p(destNode) // Sum.
-            A += new AEntry(prob*(1-c), srcNodeEntry, destNodeEntry)
+            A += new AEntry(prob*(1-c), destNodeEntry, srcNodeEntry)
         }
         addOutlink
     }
@@ -304,7 +305,7 @@ class RandomWalkParallelized(
                 curPSplit = (curPSplit + 1) % splitCount
             }
             val destNodeEntry = p(destNode) // Sum.
-            srcNodeEntries += new AEntry(prob*(1-c), srcNodeEntry,destNodeEntry)
+            srcNodeEntries += new AEntry(prob*(1-c), destNodeEntry, srcNodeEntry)
         }
 
         addOutlink
@@ -317,7 +318,8 @@ class RandomWalkParallelized(
             curPSplit = (curPSplit + 1) % splitCount
         }
         p(id).value = value
-        val curE = new EEntry(value*c, p(id))
+        // val curE = new EEntry(value*c, p(id))
+        val curE = new EEntry(value, p(id))
         e += curE
         eSum += value
 
@@ -332,8 +334,8 @@ class RandomWalkParallelized(
     override def normalizeE() {
         val futures = eSplits.map{split => future{ blocking {
             split.foreach{ entry =>
-                entry.value /= eSum
                 entry.pEntry.value /= eSum
+                entry.value = entry.value / eSum * c
             }
         }}}
 
@@ -439,6 +441,7 @@ object RandomWalkExample {
         // 5 -> 1:.25, 3:.25, 4:.5
         
         val rwr = new RandomWalkParallelized(0.2)
+        // val rwr = new RandomWalk(0.2)
 
         // Add outgoing edges for node 1:
         var addTrans = rwr.addNodeTransitionsFnc(1)
