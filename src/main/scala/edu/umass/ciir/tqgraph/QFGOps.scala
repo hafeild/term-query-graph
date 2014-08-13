@@ -140,7 +140,7 @@ class QFGOps(val termRandomWalkCache:String="",
     def readRewriteMatrix() {
         Console.err.print("Loading transition matrix...")
         rwr = parseRewriteMatrix(queryReformulationMatrixFilename, parallel, 
-            splitCount, convergenceDistance) 
+            splitCount, convergenceDistance, alpha) 
         Console.err.println("done!")
     }
 
