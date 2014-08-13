@@ -185,8 +185,8 @@ abstract class RandomWalker(val c:Double,
      * @param duration     The duration in milliseconds.
      */
     class RunInfo(val iterations:Int, val duration:Long) {
-        override def toString():String = "Converged after "+ iterations +" iterations in "+
-            duration +"ms"
+        override def toString():String = "Converged after "+ iterations +
+            " iterations in "+ duration +"ms"
     }
 }
 
@@ -227,7 +227,7 @@ class RandomWalk(
             if( !p.contains(destNode) )
                 p(destNode) = new PEntry()
             val destNodeEntry = p(destNode) // Sum.
-            A += new AEntry(prob*(1-c), destNodeEntry, srcNodeEntry)
+            A += new AEntry(prob*(1-c), srcNodeEntry, destNodeEntry)
         }
         addOutlink
     }
@@ -248,7 +248,7 @@ class RandomWalk(
 
 
 /**
- * A parallelized impelmentation of an in-memory random walk with restarts.
+ * A parallelized implementation of an in-memory random walk with restarts.
  */
 class RandomWalkParallelized(
         c:Double, 
@@ -305,7 +305,7 @@ class RandomWalkParallelized(
                 curPSplit = (curPSplit + 1) % splitCount
             }
             val destNodeEntry = p(destNode) // Sum.
-            srcNodeEntries += new AEntry(prob*(1-c), destNodeEntry, srcNodeEntry)
+            srcNodeEntries += new AEntry(prob*(1-c), srcNodeEntry,destNodeEntry)
         }
 
         addOutlink
@@ -347,7 +347,7 @@ class RandomWalkParallelized(
      * Performs one step of the random walk.
      */
     def step(){
-        var futures = splits.map{split => future{ blocking{ processSplit(split) }}}
+        var futures = splits.map{split =>future{blocking{processSplit(split) }}}
         Await.result(Future.sequence(futures), 50000 seconds)
 
         futures = eSplits.map{split => future{ blocking{ updateESplit(split) }}}
@@ -383,7 +383,7 @@ class RandomWalkParallelized(
      */
     override def updateP():Double = {
         var sum = 0.0
-        val futures = pSplits.map{split => future{ blocking{ updatePSplit(split) }}}
+        val futures = pSplits.map{split =>future{blocking{updatePSplit(split)}}}
         Await.result(Future.sequence(futures), 50000 seconds).foreach(sum += _)
         //Console.err.println(" = "+ sum)
         sum
@@ -426,7 +426,6 @@ object RandomWalkParallelized {
     val Splits = 4
 }
 
-
 /**
  * A running example.
  */
@@ -440,8 +439,8 @@ object RandomWalkExample {
         // 4 -> 5:1
         // 5 -> 1:.25, 3:.25, 4:.5
         
-        val rwr = new RandomWalkParallelized(0.2)
-        // val rwr = new RandomWalk(0.2)
+        // val rwr = new RandomWalkParallelized(0.2)
+        val rwr = new RandomWalk(0.2)
 
         // Add outgoing edges for node 1:
         var addTrans = rwr.addNodeTransitionsFnc(1)

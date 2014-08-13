@@ -1,9 +1,6 @@
 // File:    ProcessQueryPairs.scala
 // Author:  Henry Feild
 // Date:    20-Nov-2012
-// File:    ProcessQueryPairs.scala
-// Author:  Henry Feild
-// Date:    20-Dec-2012
 // Copyright 2013 Henry Feild
 // License: Revised BSD -- see LICENSE in the root directory.
 
