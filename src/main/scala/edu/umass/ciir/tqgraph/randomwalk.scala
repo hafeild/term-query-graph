@@ -188,6 +188,10 @@ abstract class RandomWalker(val c:Double,
         override def toString():String = "Converged after "+ iterations +
             " iterations in "+ duration +"ms"
     }
+
+    def printA {
+
+    }
 }
 
 object RandomWalker {
@@ -242,6 +246,10 @@ class RandomWalk(
         e.foreach{ entry =>
             entry.pEntry.runningSum += entry.value
         }
+    }
+
+    override def printA {
+        A.foreach(entry => Console.err.println(entry.prob))
     }
 }
 
